@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -euo pipefail
 
 # Generate a JSON document for the kafka-reassign-partitions tool
 
