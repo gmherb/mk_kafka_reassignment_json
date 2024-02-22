@@ -3,21 +3,23 @@
 set -euo pipefail
 
 # Generate a JSON document for the kafka-reassign-partitions tool
+#
+# Currently only supports 2 sites for a 2.5 cluster setup.
+# min.insync.replicas=2 and acks=all is recommended for 2.5 clusters.
 
 readonly NAME=${1:-"test"}
 readonly PARTITIONS=${2:-"9"}
 readonly REPLICA_FACTOR=${3:-"4"}
-readonly SITES=${4:-"2"}
-readonly SITE1_BROKERS=${5:-"0 1 2"}
-readonly SITE2_BROKERS=${6:-"10 11 12"}
+readonly SITE1_BROKERS=${4:-"0 1 2"}
+readonly SITE2_BROKERS=${5:-"10 11 12"}
 
+readonly SITES="2"
 half_repl=$(echo $(( ${REPLICA_FACTOR} / $SITES )))
 readonly half_repl
 half_part=$(echo $(( ${PARTITIONS} / $SITES )))
 readonly half_part
 
 function mk_document_header {
-  local topic_name=$1
   cat <<EOF
 {
   "version": 1,
