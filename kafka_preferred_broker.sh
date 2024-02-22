@@ -11,8 +11,10 @@ readonly SITES=${4:-"2"}
 readonly SITE1_BROKERS=${5:-"0 1 2"}
 readonly SITE2_BROKERS=${6:-"10 11 12"}
 
-readonly half_repl=$(echo $(( ${REPLICA_FACTOR} / $SITES )))
-readonly half_part=$(echo $(( ${PARTITIONS} / $SITES )))
+half_repl=$(echo $(( ${REPLICA_FACTOR} / $SITES )))
+readonly half_repl
+half_part=$(echo $(( ${PARTITIONS} / $SITES )))
+readonly half_part
 
 function mk_document_header {
   local topic_name=$1
