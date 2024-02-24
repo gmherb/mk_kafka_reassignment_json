@@ -39,9 +39,9 @@ $DEFAULT_RACK_PREFERENCE)"
 $DEFAULT_PARTITIONS)"
   echo "  replica_factor:   Number of replicas (default: \
 $DEFAULT_REPLICATION_FACTOR)"
-  echo "  rack1_brokers:    Space separated list of brokers for rack 1 \
+  echo "  rack1_brokers:    Space separated list of brokers ids for rack 1 \
 (default: $DEFAULT_RACK1_BROKERS)"
-  echo "  rack2_brokers:    Space separated list of brokers for rack 2 \
+  echo "  rack2_brokers:    Space separated list of broker ids for rack 2 \
 (default: $DEFAULT_RACK2_BROKERS)"
   exit 1
 }
