@@ -7,8 +7,7 @@ readonly SCRIPT_DESCRIPTION="Generate a JSON document for the \
 kafka-reassign-partitions tool. Currently supports only [$RACK_COUNT] racks \
 for a 2.5 cluster setup."
 
-readonly DEFAULT_TOPIC_NAME="test-topic.v1"
-readonly TOPIC_NAME=${1:-"$DEFAULT_TOPIC_NAME"}
+readonly TOPIC_NAME=${1:-""}
 
 readonly DEFAULT_RACK_PREFERENCE="distributed"
 readonly RACK_PREFERENCE=${2:-"$DEFAULT_RACK_PREFERENCE"}
@@ -27,24 +26,22 @@ readonly RACK2_BROKERS=${6:-"$DEFAULT_RACK2_BROKERS"}
 
 function usage {
   echo "$SCRIPT_DESCRIPTION"
-  echo "Usage: $0 <topic_name> <rack_preference> <partitions> \
-<replication_factor> <rack1_name> <rack1_brokers> <rack2_name> \
-<rack2_brokers>"
-  echo "  topic_name:       Name of the topic to reassign \
-partitions for (default: $DEFAULT_TOPIC_NAME)"
-  echo "  rack_preference:  Rack to list first for leadership \
-preference; rack1, rack2, or distributed (default: \
-$DEFAULT_RACK_PREFERENCE)"
-  echo "  partitions:       Number of partitions (default: \
+  echo "Usage: $0 <topic_name> [rack_preference] [partitions] \
+[replication_factor] [rack1_brokers] [rack2_brokers]"
+  echo "  topic_name:           Name of the topic (required)"
+  echo "  rack_preference:      Rack leadership preference: rack1|r1|1, \
+rack2|r2|2, distributed|dist|d (default: $DEFAULT_RACK_PREFERENCE)"
+  echo "  partitions:           Number of partitions (default: \
 $DEFAULT_PARTITIONS)"
-  echo "  replica_factor:   Number of replicas (default: \
+  echo "  replication_factor:   Number of replicas (default: \
 $DEFAULT_REPLICATION_FACTOR)"
-  echo "  rack1_brokers:    Space separated list of brokers ids for rack 1 \
+  echo "  rack1_brokers:        Space separated list of broker ids for rack1 \
 (default: $DEFAULT_RACK1_BROKERS)"
-  echo "  rack2_brokers:    Space separated list of broker ids for rack 2 \
+  echo "  rack2_brokers:        Space separated list of broker ids for rack2 \
 (default: $DEFAULT_RACK2_BROKERS)"
   exit 1
 }
+[[ $# -lt 1 ]] && usage
 
 HALF_REPL=$(echo $(( ${REPLICATION_FACTOR} / $RACK_COUNT )))
 readonly HALF_REPL
