@@ -136,19 +136,17 @@ function mk_distributed_reassignment_json {
         rack2_partitions \
         replica_assignment \
         p 
-  rack1_partitions=$(seq 0 $(( ${HALF_PART} - 1 )))
-  for p in $rack1_partitions; do
+
+  for p in $(seq 0 $(( ${HALF_PART} - 1 ))); do
     replica_assignment=$(gen_replica_assignment_prefer_rack1)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
-  rack2_partitions=$(seq ${HALF_PART} $(( ${PARTITIONS} - 2 )))
-  for p in $rack2_partitions; do
+  for p in $(seq ${HALF_PART} $(( ${PARTITIONS} - 2 ))); do
     replica_assignment=$(gen_replica_assignment_prefer_rack2)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
-  # Last partition without comma
   replica_assignment=$(gen_replica_assignment_prefer_rack2)
   mk_partition_replica $TOPIC_NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
 }
@@ -157,13 +155,12 @@ function mk_rack1_preferred_reassignment_json {
   local rack1_partitions \
         replica_assignment \
         p
-  rack1_partitions=$(seq 0 $(( ${PARTITIONS} - 2 )))
-  for p in $rack1_partitions; do
+
+  for p in $(seq 0 $(( ${PARTITIONS} - 2 ))); do
     replica_assignment=$(gen_replica_assignment_prefer_rack1)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
-  # Last partition without comma
   replica_assignment=$(gen_replica_assignment_prefer_rack1)
   mk_partition_replica $TOPIC_NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
 }
@@ -172,13 +169,12 @@ function mk_rack2_preferred_reassignment_json {
   local rack2_partitions \
         replica_assignment \
         p
-  rack2_partitions=$(seq 0 $(( ${PARTITIONS} - 2 )))
-  for p in $rack2_partitions; do
+
+  for p in $(seq 0 $(( ${PARTITIONS} - 2 ))); do
     replica_assignment=$(gen_replica_assignment_prefer_rack2)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
-  # Last partition without comma
   replica_assignment=$(gen_replica_assignment_prefer_rack2)
   mk_partition_replica $TOPIC_NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
 }
