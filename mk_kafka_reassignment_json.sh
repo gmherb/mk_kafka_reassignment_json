@@ -2,34 +2,55 @@
 
 set -euo pipefail
 
-# Generate a JSON document for the kafka-reassign-partitions tool
-#
-# Currently only supports 2 sites for a 2.5 cluster setup.
-# min.insync.replicas=2 and acks=all is recommended for 2.5 clusters.
+readonly RACK_COUNT="2"
+readonly SCRIPT_DESCRIPTION="Generate a JSON document for the \
+kafka-reassign-partitions tool. Currently supports only [$RACK_COUNT] racks for a 2.5 \
+cluster setup."
 
-readonly PREFERENCE=${1:-"dist"}
-readonly NAME=${2:-"test"}
-readonly PARTITIONS=${3:-"9"}
-readonly REPLICA_FACTOR=${4:-"4"}
-readonly SITE1_BROKERS=${5:-"0 1 2"}
-readonly SITE2_BROKERS=${6:-"10 11 12"}
+readonly TOPIC_NAME=${1:-"test-topic.v1"}
+readonly RACK_PREFERENCE=${2:-"distributed"}
+readonly PARTITIONS=${3:-"12"}
+readonly REPLICATION_FACTOR=${4:-"4"}
+readonly RACK1_NAME=${5:-"rack1"}
+readonly RACK1_BROKERS=${6:-"10 11 12"}
+readonly RACK2_NAME=${7:-"rack2"}
+readonly RACK2_BROKERS=${8:-"20 21 22"}
 
-readonly SITES="2"
-half_repl=$(echo $(( ${REPLICA_FACTOR} / $SITES )))
-readonly HALF_REPL=$half_repl
-readonly half_repl
-half_part=$(echo $(( ${PARTITIONS} / $SITES )))
-readonly half_part
-readonly HALF_PART=$half_part
+HALF_REPL=$(echo $(( ${REPLICATION_FACTOR} / $RACK_COUNT )))
+readonly HALF_REPL
+HALF_PART=$(echo $(( ${PARTITIONS} / $RACK_COUNT )))
+readonly HALF_PART
+
+function main {
+  mk_document_header
+  case $RACK_PREFERENCE in
+    "$RACK1_NAME")
+      mk_site1_preferred_reassignment_json
+      ;;
+    "$RACK2_NAME")
+      mk_site2_preferred_reassignment_json
+      ;;
+    "distributed")
+      mk_distributed_reassignment_json
+      ;;
+    *)
+      usage
+      ;;
+  esac
+  mk_document_footer
+}
 
 function usage {
-  echo "Usage: $0 <preferred_site> <topic_name> <partitions> <replica_factor> <site1_brokers> <site2_brokers>"
-  echo "  preferred_site:  site1, site2, or dist for distributed"
-  echo "  topic_name:      Name of the topic"
-  echo "  partitions:      Number of partitions"
-  echo "  replica_factor:  Number of replicas"
-  echo "  site1_brokers:   Space separated list of brokers for site 1"
-  echo "  site2_brokers:   Space separated list of brokers for site 2"
+  echo "$SCRIPT_DESCRIPTION"
+  echo "Usage: $0 <topic_name> <rack_preference> <partitions> <replication_factor> <rack1_name> <rack1_brokers> <rack2_name> <rack2_brokers>"
+  echo "  topic_name:       Name of the topic to reassign partitions for (default: $TOPIC_NAME)"
+  echo "  rack_preference:  Rack to list first for leadership preference; rack1, rack2, or distributed (default: $RACK_PREFERENCE)"
+  echo "  partitions:       Number of partitions (default: $PARTITIONS)"
+  echo "  replica_factor:   Number of replicas (default: $REPLICATION_FACTOR)"
+  echo "  rack1_name:       Name of rack 1 (default: $RACK1_NAME)"
+  echo "  rack1_brokers:    Space separated list of brokers for rack 1 (default: $RACK1_BROKERS)"
+  echo "  rack2_name:       Name of rack 2 (default: $RACK2_NAME)"
+  echo "  rack2_brokers:    Space separated list of brokers for rack 2 (default: $RACK2_BROKERS)"
   exit 1
 }
 
@@ -42,10 +63,10 @@ EOF
 }
 
 function mk_partition_replica {
-  local topic_name=$1
-  local partition=$2
-  local replicas=$3
-  local comma=${4:-''}
+  local -r topic_name=$1
+  local -r partition=$2
+  local -r replicas=$3
+  local -r comma=${4:-''}
   cat <<EOF
     {
       "topic": "$topic_name",
@@ -70,85 +91,69 @@ function shuffle {
     | tr "\n" ','
 }
 
-function shuffle_site1 {
+function shuffle_rack1 {
   local -r count=$1
-  shuffle "$count" "$SITE1_BROKERS"
+  shuffle "$count" "$RACK1_BROKERS"
 }
 
-function shuffle_site2 {
+function shuffle_rack2 {
   local -r count=$1
-  shuffle "$count" "$SITE2_BROKERS"
+  shuffle "$count" "$RACK2_BROKERS"
 }
 
-function gen_replica_assignment_prefer_site1 {
-  shuffle_site1 "$HALF_REPL" "$SITE1_BROKERS"
-  shuffle_site2 "$HALF_REPL" "$SITE2_BROKERS" \
+function gen_replica_assignment_prefer_rack1 {
+  shuffle_rack1 "$HALF_REPL" "$RACK1_BROKERS"
+  shuffle_rack2 "$HALF_REPL" "$RACK2_BROKERS" \
     | sed 's/,$/\n/' 
 }
 
-function gen_replica_assignment_prefer_site2 {
-  shuffle_site2 "$HALF_REPL" "$SITE2_BROKERS"
-  shuffle_site1 "$HALF_REPL" "$SITE1_BROKERS" \
+function gen_replica_assignment_prefer_rack2 {
+  shuffle_rack2 "$HALF_REPL" "$RACK2_BROKERS"
+  shuffle_rack1 "$HALF_REPL" "$RACK1_BROKERS" \
     | sed 's/,$/\n/' 
 }
 
 function mk_distributed_reassignment_json {
-  SITE1_PARTITIONS=$(seq 0 $(( ${half_part} - 1 )))
-  for p in $SITE1_PARTITIONS; do
-    replica_assignment=$(gen_replica_assignment_prefer_site1)
-    mk_partition_replica $NAME $p $replica_assignment ","
+  RACK1_PARTITIONS=$(seq 0 $(( ${HALF_PART} - 1 )))
+  for p in $RACK1_PARTITIONS; do
+    replica_assignment=$(gen_replica_assignment_prefer_rack1)
+    mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
-  SITE2_PARTITIONS=$(seq ${half_part} $(( ${PARTITIONS} - 2 )))
-  for p in $SITE2_PARTITIONS; do
-    replica_assignment=$(gen_replica_assignment_prefer_site2)
-    mk_partition_replica $NAME $p $replica_assignment ","
-  done
-
-  # Last partition without comma
-  replica_assignment=$(gen_replica_assignment_prefer_site2)
-  mk_partition_replica $NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
-}
-
-function mk_site1_preferred_reassignment_json {
-  SITE1_PARTITIONS=$(seq 0 $(( ${PARTITIONS} - 2 )))
-  for p in $SITE1_PARTITIONS; do
-    replica_assignment=$(gen_replica_assignment_prefer_site1)
-    mk_partition_replica $NAME $p $replica_assignment ","
+  RACK2_PARTITIONS=$(seq ${HALF_PART} $(( ${PARTITIONS} - 2 )))
+  for p in $RACK2_PARTITIONS; do
+    replica_assignment=$(gen_replica_assignment_prefer_rack2)
+    mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
   # Last partition without comma
-  replica_assignment=$(gen_replica_assignment_prefer_site1)
-  mk_partition_replica $NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
+  replica_assignment=$(gen_replica_assignment_prefer_rack2)
+  mk_partition_replica $TOPIC_NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
 }
 
-function mk_site2_preferred_reassignment_json {
-  SITE2_PARTITIONS=$(seq 0 $(( ${PARTITIONS} - 2 )))
-  for p in $SITE2_PARTITIONS; do
-    replica_assignment=$(gen_replica_assignment_prefer_site2)
-    mk_partition_replica $NAME $p $replica_assignment ","
+function mk_rack1_preferred_reassignment_json {
+  RACK1_PARTITIONS=$(seq 0 $(( ${PARTITIONS} - 2 )))
+  for p in $RACK1_PARTITIONS; do
+    replica_assignment=$(gen_replica_assignment_prefer_rack1)
+    mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
   # Last partition without comma
-  replica_assignment=$(gen_replica_assignment_prefer_site2)
-  mk_partition_replica $NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
+  replica_assignment=$(gen_replica_assignment_prefer_rack1)
+  mk_partition_replica $TOPIC_NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
+}
+
+function mk_rack2_preferred_reassignment_json {
+  RACK2_PARTITIONS=$(seq 0 $(( ${PARTITIONS} - 2 )))
+  for p in $RACK2_PARTITIONS; do
+    replica_assignment=$(gen_replica_assignment_prefer_rack2)
+    mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
+  done
+
+  # Last partition without comma
+  replica_assignment=$(gen_replica_assignment_prefer_rack2)
+  mk_partition_replica $TOPIC_NAME $(( ${PARTITIONS} - 1 )) $replica_assignment
 }
 
 
-# Main
-mk_document_header
-case $PREFERENCE in
-  "site1")
-    mk_site1_preferred_reassignment_json
-    ;;
-  "site2")
-    mk_site2_preferred_reassignment_json
-    ;;
-  "dist")
-    mk_distributed_reassignment_json
-    ;;
-  *)
-    usage
-    ;;
-esac
-mk_document_footer
+main
