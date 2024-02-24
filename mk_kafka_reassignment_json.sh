@@ -7,14 +7,44 @@ readonly SCRIPT_DESCRIPTION="Generate a JSON document for the \
 kafka-reassign-partitions tool. Currently supports only [$RACK_COUNT] racks for a 2.5 \
 cluster setup."
 
-readonly TOPIC_NAME=${1:-"test-topic.v1"}
-readonly RACK_PREFERENCE=${2:-"distributed"}
-readonly PARTITIONS=${3:-"12"}
-readonly REPLICATION_FACTOR=${4:-"4"}
-readonly RACK1_NAME=${5:-"rack1"}
-readonly RACK1_BROKERS=${6:-"10 11 12"}
-readonly RACK2_NAME=${7:-"rack2"}
-readonly RACK2_BROKERS=${8:-"20 21 22"}
+readonly DEFAULT_TOPIC_NAME="test-topic.v1"
+readonly TOPIC_NAME=${1:-"$DEFAULT_TOPIC_NAME"}
+
+readonly DEFAULT_RACK_PREFERENCE="distributed"
+readonly RACK_PREFERENCE=${2:-"$DEFAULT_RACK_PREFERENCE"}
+
+readonly DEFAULT_PARTITIONS="12"
+readonly PARTITIONS=${3:-"$DEFAULT_PARTITIONS"}
+
+readonly DEFAULT_REPLICATION_FACTOR="4"
+readonly REPLICATION_FACTOR=${4:-"$DEFAULT_REPLICATION_FACTOR"}
+
+readonly DEFAULT_RACK1_NAME=${5:-"rack1"}
+readonly RACK1_NAME=${5:-"$DEFAULT_RACK1_NAME"}
+
+readonly DEFAULT_RACK1_BROKERS="10 11 12"
+readonly RACK1_BROKERS=${6:-"$DEFAULT_RACK1_BROKERS"}
+
+readonly DEFAULT_RACK2_NAME=${7:-"rack2"}
+readonly RACK2_NAME=${7:-"$DEFAULT_RACK2_NAME"}
+
+readonly DEFAULT_RACK2_BROKERS="20 21 22"
+readonly RACK2_BROKERS=${8:-"$DEFAULT_RACK2_BROKERS"}
+
+function usage {
+  echo "$SCRIPT_DESCRIPTION"
+  echo "Usage: $0 <topic_name> <rack_preference> <partitions> <replication_factor> <rack1_name> <rack1_brokers> <rack2_name> <rack2_brokers>"
+  echo "  topic_name:       Name of the topic to reassign partitions for (default: $DEFAULT_TOPIC_NAME)"
+  echo "  rack_preference:  Rack to list first for leadership preference; rack1, rack2, or distributed (default: $DEFAULT_RACK_PREFERENCE)"
+  echo "  partitions:       Number of partitions (default: $DEFAULT_PARTITIONS)"
+  echo "  replica_factor:   Number of replicas (default: $DEFAULT_REPLICATION_FACTOR)"
+  echo "  rack1_name:       Name of rack 1 (default: $DEFAULT_RACK1_NAME)"
+  echo "  rack1_brokers:    Space separated list of brokers for rack 1 (default: $DEFAULT_RACK1_BROKERS)"
+  echo "  rack2_name:       Name of rack 2 (default: $DEFAULT_RACK2_NAME)"
+  echo "  rack2_brokers:    Space separated list of brokers for rack 2 (default: $DEFAULT_RACK2_BROKERS)"
+  exit 1
+}
+
 
 HALF_REPL=$(echo $(( ${REPLICATION_FACTOR} / $RACK_COUNT )))
 readonly HALF_REPL
@@ -22,15 +52,17 @@ HALF_PART=$(echo $(( ${PARTITIONS} / $RACK_COUNT )))
 readonly HALF_PART
 
 function main {
-  mk_document_header
   case $RACK_PREFERENCE in
-    "$RACK1_NAME")
-      mk_site1_preferred_reassignment_json
+    "rack1")
+      mk_document_header
+      mk_rack1_preferred_reassignment_json
       ;;
-    "$RACK2_NAME")
-      mk_site2_preferred_reassignment_json
+    "rack2")
+      mk_document_header
+      mk_rack2_preferred_reassignment_json
       ;;
     "distributed")
+      mk_document_header
       mk_distributed_reassignment_json
       ;;
     *)
@@ -40,19 +72,7 @@ function main {
   mk_document_footer
 }
 
-function usage {
-  echo "$SCRIPT_DESCRIPTION"
-  echo "Usage: $0 <topic_name> <rack_preference> <partitions> <replication_factor> <rack1_name> <rack1_brokers> <rack2_name> <rack2_brokers>"
-  echo "  topic_name:       Name of the topic to reassign partitions for (default: $TOPIC_NAME)"
-  echo "  rack_preference:  Rack to list first for leadership preference; rack1, rack2, or distributed (default: $RACK_PREFERENCE)"
-  echo "  partitions:       Number of partitions (default: $PARTITIONS)"
-  echo "  replica_factor:   Number of replicas (default: $REPLICATION_FACTOR)"
-  echo "  rack1_name:       Name of rack 1 (default: $RACK1_NAME)"
-  echo "  rack1_brokers:    Space separated list of brokers for rack 1 (default: $RACK1_BROKERS)"
-  echo "  rack2_name:       Name of rack 2 (default: $RACK2_NAME)"
-  echo "  rack2_brokers:    Space separated list of brokers for rack 2 (default: $RACK2_BROKERS)"
-  exit 1
-}
+
 
 function mk_document_header {
   cat <<EOF
