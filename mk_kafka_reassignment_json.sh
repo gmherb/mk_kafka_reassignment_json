@@ -46,7 +46,6 @@ $DEFAULT_REPLICATION_FACTOR)"
   exit 1
 }
 
-
 HALF_REPL=$(echo $(( ${REPLICATION_FACTOR} / $RACK_COUNT )))
 readonly HALF_REPL
 HALF_PART=$(echo $(( ${PARTITIONS} / $RACK_COUNT )))
@@ -72,8 +71,6 @@ function main {
   esac
   mk_document_footer
 }
-
-
 
 function mk_document_header {
   cat <<EOF
