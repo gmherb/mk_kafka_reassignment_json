@@ -132,14 +132,18 @@ function gen_replica_assignment_prefer_rack2 {
 }
 
 function mk_distributed_reassignment_json {
-  RACK1_PARTITIONS=$(seq 0 $(( ${HALF_PART} - 1 )))
-  for p in $RACK1_PARTITIONS; do
+  local rack1_partitions \
+        rack2_partitions \
+        replica_assignment \
+        p 
+  rack1_partitions=$(seq 0 $(( ${HALF_PART} - 1 )))
+  for p in $rack1_partitions; do
     replica_assignment=$(gen_replica_assignment_prefer_rack1)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
 
-  RACK2_PARTITIONS=$(seq ${HALF_PART} $(( ${PARTITIONS} - 2 )))
-  for p in $RACK2_PARTITIONS; do
+  rack2_partitions=$(seq ${HALF_PART} $(( ${PARTITIONS} - 2 )))
+  for p in $rack2_partitions; do
     replica_assignment=$(gen_replica_assignment_prefer_rack2)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
@@ -150,8 +154,11 @@ function mk_distributed_reassignment_json {
 }
 
 function mk_rack1_preferred_reassignment_json {
-  RACK1_PARTITIONS=$(seq 0 $(( ${PARTITIONS} - 2 )))
-  for p in $RACK1_PARTITIONS; do
+  local rack1_partitions \
+        replica_assignment \
+        p
+  rack1_partitions=$(seq 0 $(( ${PARTITIONS} - 2 )))
+  for p in $rack1_partitions; do
     replica_assignment=$(gen_replica_assignment_prefer_rack1)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
@@ -162,8 +169,11 @@ function mk_rack1_preferred_reassignment_json {
 }
 
 function mk_rack2_preferred_reassignment_json {
-  RACK2_PARTITIONS=$(seq 0 $(( ${PARTITIONS} - 2 )))
-  for p in $RACK2_PARTITIONS; do
+  local rack2_partitions \
+        replica_assignment \
+        p
+  rack2_partitions=$(seq 0 $(( ${PARTITIONS} - 2 )))
+  for p in $rack2_partitions; do
     replica_assignment=$(gen_replica_assignment_prefer_rack2)
     mk_partition_replica $TOPIC_NAME $p $replica_assignment ","
   done
