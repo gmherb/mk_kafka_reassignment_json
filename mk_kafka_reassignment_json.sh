@@ -4,8 +4,8 @@ set -euo pipefail
 
 readonly RACK_COUNT="2"
 readonly SCRIPT_DESCRIPTION="Generate a JSON document for the \
-kafka-reassign-partitions tool. Currently supports only [$RACK_COUNT] racks for a 2.5 \
-cluster setup."
+kafka-reassign-partitions tool. Currently supports only [$RACK_COUNT] racks \
+for a 2.5 cluster setup."
 
 readonly DEFAULT_TOPIC_NAME="test-topic.v1"
 readonly TOPIC_NAME=${1:-"$DEFAULT_TOPIC_NAME"}
@@ -19,29 +19,30 @@ readonly PARTITIONS=${3:-"$DEFAULT_PARTITIONS"}
 readonly DEFAULT_REPLICATION_FACTOR="4"
 readonly REPLICATION_FACTOR=${4:-"$DEFAULT_REPLICATION_FACTOR"}
 
-readonly DEFAULT_RACK1_NAME=${5:-"rack1"}
-readonly RACK1_NAME=${5:-"$DEFAULT_RACK1_NAME"}
-
 readonly DEFAULT_RACK1_BROKERS="10 11 12"
-readonly RACK1_BROKERS=${6:-"$DEFAULT_RACK1_BROKERS"}
-
-readonly DEFAULT_RACK2_NAME=${7:-"rack2"}
-readonly RACK2_NAME=${7:-"$DEFAULT_RACK2_NAME"}
+readonly RACK1_BROKERS=${5:-"$DEFAULT_RACK1_BROKERS"}
 
 readonly DEFAULT_RACK2_BROKERS="20 21 22"
-readonly RACK2_BROKERS=${8:-"$DEFAULT_RACK2_BROKERS"}
+readonly RACK2_BROKERS=${6:-"$DEFAULT_RACK2_BROKERS"}
 
 function usage {
   echo "$SCRIPT_DESCRIPTION"
-  echo "Usage: $0 <topic_name> <rack_preference> <partitions> <replication_factor> <rack1_name> <rack1_brokers> <rack2_name> <rack2_brokers>"
-  echo "  topic_name:       Name of the topic to reassign partitions for (default: $DEFAULT_TOPIC_NAME)"
-  echo "  rack_preference:  Rack to list first for leadership preference; rack1, rack2, or distributed (default: $DEFAULT_RACK_PREFERENCE)"
-  echo "  partitions:       Number of partitions (default: $DEFAULT_PARTITIONS)"
-  echo "  replica_factor:   Number of replicas (default: $DEFAULT_REPLICATION_FACTOR)"
-  echo "  rack1_name:       Name of rack 1 (default: $DEFAULT_RACK1_NAME)"
-  echo "  rack1_brokers:    Space separated list of brokers for rack 1 (default: $DEFAULT_RACK1_BROKERS)"
-  echo "  rack2_name:       Name of rack 2 (default: $DEFAULT_RACK2_NAME)"
-  echo "  rack2_brokers:    Space separated list of brokers for rack 2 (default: $DEFAULT_RACK2_BROKERS)"
+  echo "Usage: $0 <topic_name> <rack_preference> <partitions> \
+<replication_factor> <rack1_name> <rack1_brokers> <rack2_name> \
+<rack2_brokers>"
+  echo "  topic_name:       Name of the topic to reassign \
+partitions for (default: $DEFAULT_TOPIC_NAME)"
+  echo "  rack_preference:  Rack to list first for leadership \
+preference; rack1, rack2, or distributed (default: \
+$DEFAULT_RACK_PREFERENCE)"
+  echo "  partitions:       Number of partitions (default: \
+$DEFAULT_PARTITIONS)"
+  echo "  replica_factor:   Number of replicas (default: \
+$DEFAULT_REPLICATION_FACTOR)"
+  echo "  rack1_brokers:    Space separated list of brokers for rack 1 \
+(default: $DEFAULT_RACK1_BROKERS)"
+  echo "  rack2_brokers:    Space separated list of brokers for rack 2 \
+(default: $DEFAULT_RACK2_BROKERS)"
   exit 1
 }
 
