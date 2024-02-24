@@ -53,15 +53,15 @@ readonly HALF_PART
 
 function main {
   case $RACK_PREFERENCE in
-    "rack1")
+    "rack1"|"r1"|1)
       mk_document_header
       mk_rack1_preferred_reassignment_json
       ;;
-    "rack2")
+    "rack2"|"r2"|2)
       mk_document_header
       mk_rack2_preferred_reassignment_json
       ;;
-    "distributed")
+    "distributed"|"dist"|"d")
       mk_document_header
       mk_distributed_reassignment_json
       ;;
