@@ -109,25 +109,15 @@ function shuffle {
     | tr "\n" ','
 }
 
-function shuffle_rack1 {
-  local -r count=$1
-  shuffle "$count" "$RACK1_BROKERS"
-}
-
-function shuffle_rack2 {
-  local -r count=$1
-  shuffle "$count" "$RACK2_BROKERS"
-}
-
 function gen_replica_assignment_prefer_rack1 {
-  shuffle_rack1 "$HALF_REPL" "$RACK1_BROKERS"
-  shuffle_rack2 "$HALF_REPL" "$RACK2_BROKERS" \
+  shuffle "$HALF_REPL" "$RACK1_BROKERS"
+  shuffle "$HALF_REPL" "$RACK2_BROKERS" \
     | sed 's/,$/\n/' 
 }
 
 function gen_replica_assignment_prefer_rack2 {
-  shuffle_rack2 "$HALF_REPL" "$RACK2_BROKERS"
-  shuffle_rack1 "$HALF_REPL" "$RACK1_BROKERS" \
+  shuffle "$HALF_REPL" "$RACK2_BROKERS"
+  shuffle "$HALF_REPL" "$RACK1_BROKERS" \
     | sed 's/,$/\n/' 
 }
 
